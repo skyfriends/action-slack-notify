@@ -191,7 +191,7 @@ func main() {
 	}
 
 	githubServerURL := "https://github.com"
-	githubActor := os.Getenv("EnvGithubActor")
+	githubActor := os.Getenv(EnvGithubActor)
 	githubFormattedImageSource := fmt.Sprintf("%s/%s.png?size=32", githubServerURL, githubActor)
 
 	msg := Webhook{

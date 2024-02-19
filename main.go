@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -228,6 +228,9 @@ func main() {
 			},
 		},
 	}
+	// log the message to stdout:
+	fmt.Printf("Sending message to %s\n", endpoint)
+	fmt.Printf("Message: %s\n", msg.Text)
 
 	if err := send(endpoint, msg); err != nil {
 		fmt.Fprintf(os.Stderr, "Error sending message: %s\n", err)

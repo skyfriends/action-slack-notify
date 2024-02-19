@@ -38,6 +38,7 @@ type Webhook struct {
 	LinkNames   string       `json:"link_names,omitempty"`
 	UnfurlLinks bool         `json:"unfurl_links"`
 	Attachments []Attachment `json:"attachments,omitempty"`
+	Blocks json.RawMessage `json:"blocks,omitempty"`
 }
 
 type Attachment struct {
@@ -227,6 +228,36 @@ func main() {
 				Fields:     fields,
 			},
 		},
+		Blocks: json.RawMessage(`[
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "` + text + `"
+            }
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "View Pull Request"
+                    },
+                    "url": "` + viewPrURL + `"
+                },
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "View JIRA Ticket"
+                    },
+                    "url": "` + viewJiraTicketURL + `"
+                }
+            ]
+        }
+    ]`),
 	}
 	// log the message to stdout:
 	fmt.Printf("Sending message to %s\n", endpoint)

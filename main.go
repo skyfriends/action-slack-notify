@@ -190,7 +190,7 @@ func main() {
 		fields = append(newfields, fields...)
 	}
 
-	githubServerURL := os.Getenv("GITHUB_SERVER_URL")
+	githubServerURL := "https://github.com"
 	githubActor := os.Getenv("EnvGithubActor")
 	githubFormattedImageSource := fmt.Sprintf("%s/%s.png?size=32", githubServerURL, githubActor)
 
@@ -297,23 +297,19 @@ func extractJiraID(prTitle string) string {
 
 var usernameToIDMap = map[string]string{
 	"alex":       "U01FFMD8P7E",
-	"Alex":       "U01FFMD8P7E",
 	"twigs67":    "U01FFMD8P7E",
 	"brad":       "U058HUUKZ6U",
-	"Brad":       "U058HUUKZ6U",
 	"dvrs-brad":  "U058HUUKZ6U",
 	"josh":       "U061W1T6L0Y",
-	"Josh":       "U061W1T6L0Y",
 	"skyfriends": "U061W1T6L0Y",
 	"bryer":      "U03HRTQ0LKW",
-	"Bryer":      "U03HRTQ0LKW",
 	"bryercowan": "U03HRTQ0LKW",
 }
 
 func findAndFormatUserID(input string) string {
 	re := regexp.MustCompile(`@(\w+)`)
 	return re.ReplaceAllStringFunc(input, func(match string) string {
-		username := match[1:] // Remove the '@' from the match.
+		username := strings.ToLower(match[1:]) // Convert username to lowercase.
 		if userID, ok := usernameToIDMap[username]; ok {
 			return "<@" + userID + ">"
 		}

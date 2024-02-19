@@ -31,26 +31,26 @@ const (
 )
 
 type Webhook struct {
-	Text        string       `json:"text,omitempty"`
-	UserName    string       `json:"username,omitempty"`
-	IconURL     string       `json:"icon_url,omitempty"`
-	IconEmoji   string       `json:"icon_emoji,omitempty"`
-	Channel     string       `json:"channel,omitempty"`
-	LinkNames   string       `json:"link_names,omitempty"`
-	UnfurlLinks bool         `json:"unfurl_links"`
-	Attachments []Attachment `json:"attachments,omitempty"`
+	Text        string          `json:"text,omitempty"`
+	UserName    string          `json:"username,omitempty"`
+	IconURL     string          `json:"icon_url,omitempty"`
+	IconEmoji   string          `json:"icon_emoji,omitempty"`
+	Channel     string          `json:"channel,omitempty"`
+	LinkNames   string          `json:"link_names,omitempty"`
+	UnfurlLinks bool            `json:"unfurl_links"`
+	Attachments []Attachment    `json:"attachments,omitempty"`
+	Blocks      json.RawMessage `json:"blocks,omitempty"`
 }
 
 type Attachment struct {
-	Fallback   string          `json:"fallback"`
-	Pretext    string          `json:"pretext,omitempty"`
-	Color      string          `json:"color,omitempty"`
-	AuthorName string          `json:"author_name,omitempty"`
-	AuthorLink string          `json:"author_link,omitempty"`
-	AuthorIcon string          `json:"author_icon,omitempty"`
-	Footer     string          `json:"footer,omitempty"`
-	Fields     []Field         `json:"fields,omitempty"`
-	Blocks     json.RawMessage `json:"blocks,omitempty"`
+	Fallback   string  `json:"fallback"`
+	Pretext    string  `json:"pretext,omitempty"`
+	Color      string  `json:"color,omitempty"`
+	AuthorName string  `json:"author_name,omitempty"`
+	AuthorLink string  `json:"author_link,omitempty"`
+	AuthorIcon string  `json:"author_icon,omitempty"`
+	Footer     string  `json:"footer,omitempty"`
+	Fields     []Field `json:"fields,omitempty"`
 }
 
 type Field struct {
@@ -173,17 +173,6 @@ func main() {
 		fields = append(mainFields, fields...)
 	}
 
-	fields = append(fields, Field{
-		Title: "View Pull Request",
-		Value: viewPrURL,
-		Short: true,
-	})
-	fields = append(fields, Field{
-		Title: "View JIRA Ticket",
-		Value: viewJiraTicketURL,
-		Short: true,
-	})
-
 	hostName := os.Getenv(EnvHostName)
 	if hostName != "" {
 		newfields := []Field{
@@ -201,28 +190,13 @@ func main() {
 		fields = append(newfields, fields...)
 	}
 
-	color := ""
-	switch os.Getenv(EnvSlackColor) {
-	case "success":
-		color = "good"
-	case "cancelled":
-		color = "#808080"
-	case "failure":
-		color = "danger"
-	default:
-		color = envOr(EnvSlackColor, "good")
-	}
-
 	msg := Webhook{
 		UserName:  os.Getenv(EnvSlackUserName),
 		IconURL:   os.Getenv(EnvSlackIcon),
 		IconEmoji: os.Getenv(EnvSlackIconEmoji),
 		Channel:   os.Getenv(EnvSlackChannel),
 		LinkNames: os.Getenv(EnvSlackLinkNames),
-		Attachments: []Attachment{
-			{
-				Color: color,
-				Blocks: json.RawMessage(`[
+		Blocks: json.RawMessage(`[
 			{
 				"type": "header",
 				"text": {
@@ -255,7 +229,7 @@ func main() {
 				"type": "section",
 				"text": {
 					"type": "mrkdwn",
-					"text": "` + strings.ReplaceAll(os.Getenv(EnvPRBody), "\n", "\\n") + `"
+					"text": "` + strings.ReplaceAll(os.Getenv(findAndFormatUsername(EnvPRBody)), "\n", "\\n") + `"
 				}
 			},
 			{
@@ -283,11 +257,8 @@ func main() {
 				]
 			}
 		]`),
-			},
-		},
 	}
 
-	// log the message to stdout:
 	fmt.Printf("Sending message to %s\n", endpoint)
 	fmt.Printf("Message: %s\n", msg.Text)
 
@@ -304,6 +275,11 @@ func extractJiraID(prTitle string) string {
 		return matches[0]
 	}
 	return ""
+}
+
+func findAndFormatUsername(input string) string {
+	re := regexp.MustCompile(`@(\w+)`)
+	return re.ReplaceAllString(input, "<@$1>")
 }
 
 func envOr(name, def string) string {

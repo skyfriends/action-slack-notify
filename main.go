@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"regexp"
 )
 
 const (
@@ -24,6 +25,8 @@ const (
 	EnvHostName       = "HOST_NAME"
 	EnvMinimal        = "MSG_MINIMAL"
 	EnvSlackLinkNames = "SLACK_LINK_NAMES"
+	EnvPRTitle        = "PR_TITLE"
+	EnvPRNumber       = "PR_NUMBER"
 )
 
 type Webhook struct {
@@ -55,6 +58,11 @@ type Field struct {
 }
 
 func main() {
+	prTitle := os.Getenv(EnvPRTitle)
+    jiraTicketID := extractJiraID(prTitle)
+    viewPrURL := os.Getenv("GITHUB_SERVER_URL") + "/" + os.Getenv("GITHUB_REPOSITORY") + "/pull/" + os.Getenv(EnvPRNumber)
+    viewJiraTicketURL := "https://makersoftware.atlassian.net/browse/" + jiraTicketID
+
 	endpoint := os.Getenv(EnvSlackWebhook)
 	if endpoint == "" {
 		fmt.Fprintln(os.Stderr, "URL is required")
@@ -163,6 +171,17 @@ func main() {
 		fields = append(mainFields, fields...)
 	}
 
+	fields = append(fields, Field{
+        Title: "View Pull Request",
+        Value: viewPrURL,
+        Short: true,
+    })
+    fields = append(fields, Field{
+        Title: "View JIRA Ticket",
+        Value: viewJiraTicketURL,
+        Short: true,
+    })
+
 	hostName := os.Getenv(EnvHostName)
 	if hostName != "" {
 		newfields := []Field{
@@ -216,12 +235,22 @@ func main() {
 	}
 }
 
+func extractJiraID(prTitle string) string {
+    re := regexp.MustCompile(`FOR-\d+`)
+    matches := re.FindStringSubmatch(prTitle)
+    if len(matches) > 0 {
+        return matches[0]
+    }
+    return ""
+}
+
 func envOr(name, def string) string {
 	if d, ok := os.LookupEnv(name); ok {
 		return d
 	}
 	return def
 }
+
 
 func send(endpoint string, msg Webhook) error {
 	enc, err := json.Marshal(msg)

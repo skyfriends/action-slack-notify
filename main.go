@@ -27,29 +27,30 @@ const (
 	EnvSlackLinkNames = "SLACK_LINK_NAMES"
 	EnvPRTitle        = "PR_TITLE"
 	EnvPRNumber       = "PR_NUMBER"
+	EnvPRBody         = "PR_BODY"
 )
 
 type Webhook struct {
-	Text        string          `json:"text,omitempty"`
-	UserName    string          `json:"username,omitempty"`
-	IconURL     string          `json:"icon_url,omitempty"`
-	IconEmoji   string          `json:"icon_emoji,omitempty"`
-	Channel     string          `json:"channel,omitempty"`
-	LinkNames   string          `json:"link_names,omitempty"`
-	UnfurlLinks bool            `json:"unfurl_links"`
-	Attachments []Attachment    `json:"attachments,omitempty"`
-	Blocks      json.RawMessage `json:"blocks,omitempty"`
+	Text        string       `json:"text,omitempty"`
+	UserName    string       `json:"username,omitempty"`
+	IconURL     string       `json:"icon_url,omitempty"`
+	IconEmoji   string       `json:"icon_emoji,omitempty"`
+	Channel     string       `json:"channel,omitempty"`
+	LinkNames   string       `json:"link_names,omitempty"`
+	UnfurlLinks bool         `json:"unfurl_links"`
+	Attachments []Attachment `json:"attachments,omitempty"`
 }
 
 type Attachment struct {
-	Fallback   string  `json:"fallback"`
-	Pretext    string  `json:"pretext,omitempty"`
-	Color      string  `json:"color,omitempty"`
-	AuthorName string  `json:"author_name,omitempty"`
-	AuthorLink string  `json:"author_link,omitempty"`
-	AuthorIcon string  `json:"author_icon,omitempty"`
-	Footer     string  `json:"footer,omitempty"`
-	Fields     []Field `json:"fields,omitempty"`
+	Fallback   string          `json:"fallback"`
+	Pretext    string          `json:"pretext,omitempty"`
+	Color      string          `json:"color,omitempty"`
+	AuthorName string          `json:"author_name,omitempty"`
+	AuthorLink string          `json:"author_link,omitempty"`
+	AuthorIcon string          `json:"author_icon,omitempty"`
+	Footer     string          `json:"footer,omitempty"`
+	Fields     []Field         `json:"fields,omitempty"`
+	Blocks     json.RawMessage `json:"blocks,omitempty"`
 }
 
 type Field struct {
@@ -220,45 +221,72 @@ func main() {
 		LinkNames: os.Getenv(EnvSlackLinkNames),
 		Attachments: []Attachment{
 			{
-				Fallback:   envOr(EnvSlackMessage, "GITHUB_ACTION="+os.Getenv("GITHUB_ACTION")+" \n GITHUB_ACTOR="+os.Getenv("GITHUB_ACTOR")+" \n GITHUB_EVENT_NAME="+os.Getenv("GITHUB_EVENT_NAME")+" \n GITHUB_REF="+os.Getenv("GITHUB_REF")+" \n GITHUB_REPOSITORY="+os.Getenv("GITHUB_REPOSITORY")+" \n GITHUB_WORKFLOW="+os.Getenv("GITHUB_WORKFLOW")),
-				Color:      color,
-				AuthorName: envOr(EnvGithubActor, ""),
-				AuthorLink: os.Getenv("GITHUB_SERVER_URL") + "/" + os.Getenv(EnvGithubActor),
-				AuthorIcon: os.Getenv("GITHUB_SERVER_URL") + "/" + os.Getenv(EnvGithubActor) + ".png?size=32",
-				Fields:     fields,
+				Color: color,
+				Blocks: json.RawMessage(`[
+			{
+				"type": "header",
+				"text": {
+					"type": "plain_text",
+					"text": "Ready for Review"
+				}
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "*Repository:* ` + os.Getenv("GITHUB_REPOSITORY") + `"
+					}
+				]
+			},
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "mrkdwn",
+						"text": "*Title:* ` + prTitle + `"
+					}
+				]
+			},
+			{
+				"type": "divider"
+			},
+			{
+				"type": "section",
+				"text": {
+					"type": "mrkdwn",
+					"text": "` + strings.ReplaceAll(os.Getenv(EnvPRBody), "\n", "\\n") + `"
+				}
+			},
+			{
+				"type": "actions",
+				"elements": [
+					{
+						"type": "button",
+						"text": {
+							"type": "plain_text",
+							"text": "View Pull Request"
+						},
+						"style": "primary",
+						"url": "` + viewPrURL + `"
+					},
+					{
+						"type": "button",
+						"text": {
+							"type": "plain_text",
+							"text": "View JIRA Ticket"
+						},
+						"style": "primary",
+						"url": "` + viewJiraTicketURL + `",
+						"value": "click_me_123"
+					}
+				]
+			}
+		]`),
 			},
 		},
-		Blocks: json.RawMessage(`[
-    {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "` + strings.ReplaceAll(text, "\n", "\\n") + `"
-        }
-    },
-    {
-        "type": "actions",
-        "elements": [
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "View Pull Request"
-                },
-                "url": "` + viewPrURL + `"
-            },
-            {
-                "type": "button",
-                "text": {
-                    "type": "plain_text",
-                    "text": "View JIRA Ticket"
-                },
-                "url": "` + viewJiraTicketURL + `"
-            }
-        ]
-    }
-]`),
 	}
+
 	// log the message to stdout:
 	fmt.Printf("Sending message to %s\n", endpoint)
 	fmt.Printf("Message: %s\n", msg.Text)

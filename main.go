@@ -229,7 +229,7 @@ func main() {
 				"type": "section",
 				"text": {
 					"type": "mrkdwn",
-					"text": "` + strings.ReplaceAll(os.Getenv(findAndFormatUsername(EnvPRBody)), "\n", "\\n") + `"
+					"text": "` + strings.ReplaceAll(os.Getenv(findAndFormatUserID(EnvPRBody)), "\n", "\\n") + `"
 				}
 			},
 			{
@@ -277,9 +277,22 @@ func extractJiraID(prTitle string) string {
 	return ""
 }
 
-func findAndFormatUsername(input string) string {
+var usernameToIDMap = map[string]string{
+	"alex":  "U01FFMD8P7E",
+	"brad":  "U058HUUKZ6U",
+	"josh":  "U061W1T6L0Y",
+	"bryer": "U03HRTQ0LKW",
+}
+
+func findAndFormatUserID(input string) string {
 	re := regexp.MustCompile(`@(\w+)`)
-	return re.ReplaceAllString(input, "<@$1>")
+	return re.ReplaceAllStringFunc(input, func(match string) string {
+		username := match[1:] // Remove the '@' from the match.
+		if userID, ok := usernameToIDMap[username]; ok {
+			return "<@" + userID + ">"
+		}
+		return match // Return the original match if no user ID is found.
+	})
 }
 
 func envOr(name, def string) string {

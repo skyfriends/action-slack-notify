@@ -190,6 +190,10 @@ func main() {
 		fields = append(newfields, fields...)
 	}
 
+	githubServerURL := os.Getenv("GITHUB_SERVER_URL")
+	githubActor := os.Getenv("EnvGithubActor")
+	githubFormattedImageSource := fmt.Sprintf("%s/%s.png?size=32", githubServerURL, githubActor)
+
 	msg := Webhook{
 		UserName:  os.Getenv(EnvSlackUserName),
 		IconURL:   os.Getenv(EnvSlackIcon),
@@ -197,6 +201,20 @@ func main() {
 		Channel:   os.Getenv(EnvSlackChannel),
 		LinkNames: os.Getenv(EnvSlackLinkNames),
 		Blocks: json.RawMessage(`[
+			{
+				"type": "context",
+				"elements": [
+					{
+						"type": "image",
+						"image_url": "` + githubFormattedImageSource + `",
+						"alt_text": "github user"
+					},
+					{
+						"type": "mrkdwn",
+						"text": "<!here> *` + os.Getenv(EnvGithubActor) + `* has a pull request ready for review."
+					}
+				]
+			},
 			{
 				"type": "header",
 				"text": {
@@ -278,10 +296,18 @@ func extractJiraID(prTitle string) string {
 }
 
 var usernameToIDMap = map[string]string{
-	"alex":  "U01FFMD8P7E",
-	"brad":  "U058HUUKZ6U",
-	"josh":  "U061W1T6L0Y",
-	"bryer": "U03HRTQ0LKW",
+	"alex":       "U01FFMD8P7E",
+	"Alex":       "U01FFMD8P7E",
+	"twigs67":    "U01FFMD8P7E",
+	"brad":       "U058HUUKZ6U",
+	"Brad":       "U058HUUKZ6U",
+	"dvrs-brad":  "U058HUUKZ6U",
+	"josh":       "U061W1T6L0Y",
+	"Josh":       "U061W1T6L0Y",
+	"skyfriends": "U061W1T6L0Y",
+	"bryer":      "U03HRTQ0LKW",
+	"Bryer":      "U03HRTQ0LKW",
+	"bryercowan": "U03HRTQ0LKW",
 }
 
 func findAndFormatUserID(input string) string {

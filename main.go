@@ -30,15 +30,15 @@ const (
 )
 
 type Webhook struct {
-	Text        string       `json:"text,omitempty"`
-	UserName    string       `json:"username,omitempty"`
-	IconURL     string       `json:"icon_url,omitempty"`
-	IconEmoji   string       `json:"icon_emoji,omitempty"`
-	Channel     string       `json:"channel,omitempty"`
-	LinkNames   string       `json:"link_names,omitempty"`
-	UnfurlLinks bool         `json:"unfurl_links"`
-	Attachments []Attachment `json:"attachments,omitempty"`
-	Blocks json.RawMessage `json:"blocks,omitempty"`
+	Text        string          `json:"text,omitempty"`
+	UserName    string          `json:"username,omitempty"`
+	IconURL     string          `json:"icon_url,omitempty"`
+	IconEmoji   string          `json:"icon_emoji,omitempty"`
+	Channel     string          `json:"channel,omitempty"`
+	LinkNames   string          `json:"link_names,omitempty"`
+	UnfurlLinks bool            `json:"unfurl_links"`
+	Attachments []Attachment    `json:"attachments,omitempty"`
+	Blocks      json.RawMessage `json:"blocks,omitempty"`
 }
 
 type Attachment struct {
@@ -60,9 +60,9 @@ type Field struct {
 
 func main() {
 	prTitle := os.Getenv(EnvPRTitle)
-    jiraTicketID := extractJiraID(prTitle)
-    viewPrURL := os.Getenv("GITHUB_SERVER_URL") + "/" + os.Getenv("GITHUB_REPOSITORY") + "/pull/" + os.Getenv(EnvPRNumber)
-    viewJiraTicketURL := "https://makersoftware.atlassian.net/browse/" + jiraTicketID
+	jiraTicketID := extractJiraID(prTitle)
+	viewPrURL := os.Getenv("GITHUB_SERVER_URL") + "/" + os.Getenv("GITHUB_REPOSITORY") + "/pull/" + os.Getenv(EnvPRNumber)
+	viewJiraTicketURL := "https://makersoftware.atlassian.net/browse/" + jiraTicketID
 
 	endpoint := os.Getenv(EnvSlackWebhook)
 	if endpoint == "" {
@@ -173,15 +173,15 @@ func main() {
 	}
 
 	fields = append(fields, Field{
-        Title: "View Pull Request",
-        Value: viewPrURL,
-        Short: true,
-    })
-    fields = append(fields, Field{
-        Title: "View JIRA Ticket",
-        Value: viewJiraTicketURL,
-        Short: true,
-    })
+		Title: "View Pull Request",
+		Value: viewPrURL,
+		Short: true,
+	})
+	fields = append(fields, Field{
+		Title: "View JIRA Ticket",
+		Value: viewJiraTicketURL,
+		Short: true,
+	})
 
 	hostName := os.Getenv(EnvHostName)
 	if hostName != "" {
@@ -229,35 +229,35 @@ func main() {
 			},
 		},
 		Blocks: json.RawMessage(`[
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "` + text + `"
-            }
-        },
-        {
-            "type": "actions",
-            "elements": [
-                {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "View Pull Request"
-                    },
-                    "url": "` + viewPrURL + `"
-                },
-                {
-                    "type": "button",
-                    "text": {
-                        "type": "plain_text",
-                        "text": "View JIRA Ticket"
-                    },
-                    "url": "` + viewJiraTicketURL + `"
-                }
-            ]
+    {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": "` + strings.ReplaceAll(text, "\n", "\\n") + `"
         }
-    ]`),
+    },
+    {
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "View Pull Request"
+                },
+                "url": "` + viewPrURL + `"
+            },
+            {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "View JIRA Ticket"
+                },
+                "url": "` + viewJiraTicketURL + `"
+            }
+        ]
+    }
+]`),
 	}
 	// log the message to stdout:
 	fmt.Printf("Sending message to %s\n", endpoint)
@@ -270,12 +270,12 @@ func main() {
 }
 
 func extractJiraID(prTitle string) string {
-    re := regexp.MustCompile(`FOR-\d+`)
-    matches := re.FindStringSubmatch(prTitle)
-    if len(matches) > 0 {
-        return matches[0]
-    }
-    return ""
+	re := regexp.MustCompile(`FOR-\d+`)
+	matches := re.FindStringSubmatch(prTitle)
+	if len(matches) > 0 {
+		return matches[0]
+	}
+	return ""
 }
 
 func envOr(name, def string) string {
@@ -284,7 +284,6 @@ func envOr(name, def string) string {
 	}
 	return def
 }
-
 
 func send(endpoint string, msg Webhook) error {
 	enc, err := json.Marshal(msg)

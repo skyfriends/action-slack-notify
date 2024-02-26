@@ -194,6 +194,9 @@ func main() {
 	githubActor := os.Getenv(EnvGithubActor)
 	githubFormattedImageSource := fmt.Sprintf("%s/%s.png?size=32", githubServerURL, githubActor)
 
+	prBody := os.Getenv(EnvPRBody)
+	safePRBody := prepareStringForJSON(prBody)
+
 	msg := Webhook{
 		UserName:  os.Getenv(EnvSlackUserName),
 		IconURL:   os.Getenv(EnvSlackIcon),
@@ -247,7 +250,7 @@ func main() {
 				"type": "section",
 				"text": {
 					"type": "mrkdwn",
-					"text": "` + strings.ReplaceAll(os.Getenv(findAndFormatUserID(EnvPRBody)), "\n", "\\n") + `"
+					"text": "` + safePRBody + `"
 				}
 			},
 			{
@@ -293,6 +296,13 @@ func extractJiraID(prTitle string) string {
 		return matches[0]
 	}
 	return ""
+}
+
+func prepareStringForJSON(s string) string {
+	// handle \r and \n:
+	escaped := strings.ReplaceAll(s, "\n", "\\n")
+	escaped = strings.ReplaceAll(escaped, "\r", "\\r")
+	return escaped
 }
 
 var usernameToIDMap = map[string]string{
